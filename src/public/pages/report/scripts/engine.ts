@@ -2,7 +2,11 @@ class Stockfish {
 
     private worker = new Worker(
         typeof WebAssembly == "object"
+        ? 
+        typeof WebAssembly == "object"
         ? "/static/scripts/stockfish-nnue-16.js"
+        : "/static/scripts/stockfish.js"
+    
         : "/static/scripts/stockfish.js"
     );
 
@@ -82,6 +86,17 @@ class Stockfish {
                 this.evaluate(fen, targetDepth, verbose).then(res);
 
                 $("#secondary-message").html("Stockfish crashed; switching to fallback engine...");
+            });
+
+            this.worker.addEventListener("error", () => {
+                // Terminate the current Stockfish, switch to Stockfish 11 as fallback engine
+                this.worker.terminate();
+                this.worker = new Worker("/static/scripts/stockfish.js");
+
+                this.worker.postMessage("uci");
+                this.worker.postMessage("setoption name MultiPV value 2");
+                
+                this.evaluate(fen, targetDepth, verbose).then(res);
             });
         });
     }

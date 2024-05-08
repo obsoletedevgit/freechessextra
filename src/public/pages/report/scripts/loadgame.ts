@@ -16,6 +16,16 @@ function updateGamesPeriod() {
     $("#game-select-period").html(`${padMonth(gamesPeriod.month)}/${gamesPeriod.year}`);
 }
 
+function getPlayersString(game: Game) {
+    if (game.white.aiLevel) {
+        return `AI level ${game.white.aiLevel} vs. ${game.black.username} (${game.black.rating})`;
+    } else if (game.black.aiLevel) {
+        return `${game.white.username} (${game.white.rating}) vs. AI level ${game.black.aiLevel}`;
+    } else {
+        return `${game.white.username} (${game.white.rating}) vs. ${game.black.username} (${game.black.rating})`;
+    }
+}
+
 function generateGameListing(game: Game): JQuery<HTMLDivElement> {
 
     let listingContainer = $<HTMLDivElement>("<div>");
@@ -30,7 +40,7 @@ function generateGameListing(game: Game): JQuery<HTMLDivElement> {
     timeClass.html(game.timeClass.replace(/^./, game.timeClass.charAt(0).toUpperCase()));
 
     let players = $("<span>");
-    players.html(`${game.white.username} (${game.white.rating}) vs. ${game.black.username} (${game.black.rating})`);
+    players.html(getPlayersString(game));
 
     listingContainer.append(timeClass);
     listingContainer.append(players);
@@ -40,6 +50,8 @@ function generateGameListing(game: Game): JQuery<HTMLDivElement> {
 }
 
 async function fetchChessComGames(username: string) {
+
+    
 
     try {
         let gamesResponse = await fetch(
@@ -110,12 +122,14 @@ async function fetchLichessGames(username: string) {
         for (let game of games) {
             let gameListing = generateGameListing({
                 white: {
-                    username: game.players.white.user.name,
-                    rating: game.players.white.rating
+                    username: game.players.white.user?.name,
+                    rating: game.players.white.rating,
+                    aiLevel: game.players.white.aiLevel
                 },
                 black: {
-                    username: game.players.black.user.name,
-                    rating: game.players.black.rating
+                    username: game.players.black.user?.name,
+                    rating: game.players.black.rating,
+                    aiLevel: game.players.black.aiLevel
                 },
                 timeClass: game.speed,
                 pgn: game.pgn
@@ -188,21 +202,26 @@ function registerModalEvents() {
 
 }
 
-$("#load-type-dropdown").on("input", () => {
+const loadTypeDropdown = $("#load-type-dropdown");
+const usernameInput = $("#chess-site-username");
+
+loadTypeDropdown.on("input", () => {
+    const selectedLoadType = loadTypeDropdown.val();
+    const savedUsernameChessCom = localStorage.getItem('chess-site-username-saved-chessCom');
+    const savedUsernameLichess = localStorage.getItem('chess-site-username-saved-lichess');
     
-    let selectedLoadType = $("#load-type-dropdown").val();
+    usernameInput.val((selectedLoadType === "chesscom" && savedUsernameChessCom) || 
+                      (selectedLoadType === "lichess" && savedUsernameLichess) || '');
 
-    let isLong = selectedLoadType == "pgn" || selectedLoadType == "json";
+    const isLong = selectedLoadType === "pgn" || selectedLoadType === "json";
     $("#pgn").css("display", isLong ? "block" : "none");
-    $("#chess-site-username").css("display", isLong ? "none" : "block");
-    $("#fetch-account-games-button").css("display", isLong ? "none" : "block");
+    $("#chess-site-username, #fetch-account-games-button").css("display", isLong ? "none" : "block");
 
-    if (selectedLoadType == "json") {
-        $("#pgn").attr("placeholder", "Enter save text here...");
-    } else {
-        $("#pgn").attr("placeholder", "Enter PGN here...");
-    }
+    $("#gameInputContainer").css("display", isLong ? "block" : "none");
+    $("#gameInputContainer2").css("display", isLong ? "none" : "block");
 
+    const placeholderText = (selectedLoadType === "json") ? "Enter JSON..." : "Enter PGN...";
+    $("#pgn").attr("placeholder", placeholderText);
 });
 
 function onFetchButtonClick() {
@@ -211,9 +230,18 @@ function onFetchButtonClick() {
 
     updateGamesPeriod();
 
-    let username = $("#chess-site-username").val()!.toString();
+    const username = usernameInput.val()!.toString();
+    const selectedLoadType = loadTypeDropdown.val();
+    
+    if (selectedLoadType === "chesscom") {
+        localStorage.setItem('chess-site-username-saved-chessCom', username);
+    } else if (selectedLoadType === "lichess") {
+        localStorage.setItem('chess-site-username-saved-lichess', username);
+    }
+
     fetchGames(username);
 }
+
 
 $("#fetch-account-games-button").on("click", onFetchButtonClick);
 
