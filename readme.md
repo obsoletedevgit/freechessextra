@@ -1,3 +1,7 @@
+# Notice
+
+## please don't send your issues to the main free chess branch please use this branches issues page. Thank you <3
+
 # WintrCat's Game Report
 
 Generate classifications for your Chess moves, for free. Available @ [chess.wintrcat.uk](https://chess.wintrcat.uk/)
