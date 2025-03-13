@@ -1,6 +1,6 @@
 # Notice
 
-# This repo is no longer maintained. I may sometimes look at pull requests and merge them if there is issues.
+# This repo is no longer maintained. I am going to move it into read-only soon.
 ## please don't send your issues to the main free chess branch please use this branches issues page. Thank you <3
 
 # WintrCat's Game Report
